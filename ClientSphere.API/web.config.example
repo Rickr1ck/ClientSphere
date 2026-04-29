@@ -1,0 +1,64 @@
+# This is an EXAMPLE web.config with PLACEHOLDER values
+# NEVER commit real secrets to GitHub!
+# Copy this to web.config and replace placeholders with actual values
+
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore 
+        processPath="dotnet" 
+        arguments=".\ClientSphere.API.dll" 
+        stdoutLogEnabled="true" 
+        stdoutLogFile="D:\home\LogFiles\stdout" 
+        hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+          
+          <!-- Replace with your actual PostgreSQL connection string -->
+          <environmentVariable name="ConnectionStrings__DefaultConnection" 
+            value="Host=YOUR_DB_HOST.postgres.database.azure.com;Port=5432;Database=ClientSphereDB;Username=YOUR_USER@YOUR_SERVER;Password=YOUR_STRONG_PASSWORD;SSL Mode=Require;Timeout=30;Command Timeout=120" />
+          
+          <!-- Replace with your actual JWT secret (minimum 64 characters) -->
+          <environmentVariable name="Jwt__Secret" 
+            value="REPLACE_WITH_YOUR_64_PLUS_CHARACTER_JWT_SECRET_KEY_HERE_BASE64_ENCODED" />
+          
+          <!-- Replace with your actual Stripe production secret key -->
+          <environmentVariable name="Stripe__SecretKey" 
+            value="sk_live_REPLACE_WITH_YOUR_ACTUAL_STRIPE_SECRET_KEY" />
+          
+          <!-- Replace with your actual Stripe webhook signing secret -->
+          <environmentVariable name="Stripe__WebhookSecret" 
+            value="whsec_REPLACE_WITH_YOUR_ACTUAL_WEBHOOK_SIGNING_SECRET" />
+          
+          <!-- CORS origins - update with your actual domain -->
+          <environmentVariable name="Cors__AllowedOrigins__0" 
+            value="https://clientsphere.runasp.net" />
+          <environmentVariable name="Cors__AllowedOrigins__1" 
+            value="https://www.clientsphere.runasp.net" />
+          
+        </environmentVariables>
+      </aspNetCore>
+      <security>
+        <requestFiltering>
+          <remove fileExtension=".json" />
+        </requestFiltering>
+      </security>
+      <httpErrors errorMode="DetailedLocalOnly" defaultResponseMode="File" />
+    </system.webServer>
+  </location>
+</configuration>
+
+<!-- 
+INSTRUCTIONS:
+1. Copy this file to web.config (if not exists)
+2. Replace ALL placeholder values with your actual credentials
+3. NEVER commit real web.config with secrets to GitHub
+4. Add web.config to .gitignore after setting up real values
+5. Or use this template and set secrets via MonsterASP control panel
+
+ALTERNATIVE: Set environment variables in MonsterASP control panel instead of web.config
+-->

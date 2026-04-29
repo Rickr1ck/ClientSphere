@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ClientSphere.API/ClientSphere.API.csproj" />
+  <Project Path="ClientSphere.Application/ClientSphere.Application.csproj" />
+  <Project Path="ClientSphere.Domain/ClientSphere.Domain.csproj" />
+  <Project Path="ClientSphere.Infrastructure/ClientSphere.Infrastructure.csproj" />
+</Solution>

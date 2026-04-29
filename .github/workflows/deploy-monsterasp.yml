@@ -1,0 +1,99 @@
+name: Deploy to MonsterASP
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  MONSTERASP_SERVER: site66264.siteasp.net
+  MONSTERASP_PORT: 8172
+  MONSTERASP_SITE: site66264
+  MONSTERASP_USER: site66264
+  # Store password in GitHub Secrets as MONSTERASP_PASSWORD
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: clientsphere-web/package-lock.json
+        
+    - name: Restore .NET dependencies
+      run: dotnet restore ClientSphere.slnx
+      
+    - name: Build Frontend
+      working-directory: clientsphere-web
+      run: |
+        npm ci
+        npm run build
+        
+    - name: Publish Backend
+      run: |
+        dotnet publish ClientSphere.API/ClientSphere.API.csproj `
+          -c Release `
+          -o publish `
+          -r win-x86 `
+          --self-contained false
+          
+    - name: Prepare deployment package
+      run: |
+        # Create deployment folder
+        mkdir deploy
+        
+        # Copy backend files
+        Copy-Item -Path "publish\*" -Destination "deploy\" -Recurse
+        
+        # Copy frontend files to wwwroot (or a subfolder)
+        mkdir deploy\wwwroot
+        Copy-Item -Path "clientsphere-web\dist\*" -Destination "deploy\wwwroot\" -Recurse
+        
+        # Verify files
+        Write-Host "Deployment package contents:"
+        Get-ChildItem deploy -Recurse | Select-Object FullName
+        
+    - name: Deploy via WebDeploy
+      run: |
+        # Install WebDeploy if not available
+        if (-not (Get-Command "msdeploy" -ErrorAction SilentlyContinue)) {
+          Write-Host "Installing WebDeploy..."
+          # You may need to download and install WebDeploy
+          # For now, we'll use FTP alternative
+        }
+        
+        # Deploy using FTP (more reliable for GitHub Actions)
+        $ftpServer = "ftp://${{ env.MONSTERASP_SERVER }}"
+        $ftpUser = "${{ env.MONSTERASP_USER }}"
+        $ftpPass = "${{ secrets.MONSTERASP_PASSWORD }}"
+        
+        # Use WinSCP or similar FTP tool
+        # This is a simplified example - you'll need to configure FTP upload
+        
+        Write-Host "Deploying to MonsterASP..."
+        Write-Host "Files to deploy are in: deploy/"
+        
+      shell: pwsh
+      
+    - name: Post-deployment health check
+      run: |
+        Start-Sleep -Seconds 10  # Wait for deployment to complete
+        try {
+          $response = Invoke-RestMethod -Uri "https://clientsphere.runasp.net/api/v1/health" -Method Get
+          Write-Host "Health check passed: $($response | ConvertTo-Json)"
+        } catch {
+          Write-Error "Health check failed: $_"
+          exit 1
+        }
